@@ -1,0 +1,89 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+
+
+
+generator erd {
+  provider = "prisma-erd-generator"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
+  address   String
+  latitude  Float
+  longitude Float
+  password  String
+  forgotOtp String?
+  forgotOtpExpiry  DateTime?
+  createdAt DateTime @default(now())
+
+  category String
+  seller   Seller?
+  buyer    Buyer?
+}
+
+model Product {
+  id        Int      @id @default(autoincrement())
+  name      String
+  price     Float
+  category  String
+  createdAt DateTime @default(now())
+
+  sellerId Int
+  seller   Seller @relation(fields: [sellerId], references: [id])
+}
+
+model Order {
+  id        Int      @id @default(autoincrement())
+  quantity  Int      @default(1)
+  name      String
+  status    String? 
+  createdAt DateTime @default(now())
+
+  buyerId Int
+  buyer   Buyer @relation(fields: [buyerId], references: [id])
+
+  sellerId Int?
+  seller   Seller? @relation(fields: [sellerId], references: [id])
+}
+
+model Seller {
+  id           Int      @id @default(autoincrement())
+  shopName     String
+  shopAddress  String
+  shopCategory String
+  latitude     Float
+  longitude    Float
+  createdAt    DateTime @default(now())
+
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id])
+
+  products Product[]
+  orders   Order[]
+}
+
+model Buyer {
+  id        Int      @id @default(autoincrement())
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+
+  userId Int  @unique
+  user   User @relation(fields: [userId], references: [id])
+
+  orders Order[]
+}
