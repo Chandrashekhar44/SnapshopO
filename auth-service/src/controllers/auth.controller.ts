@@ -30,7 +30,7 @@ export const signup = asynchandler(async (req, res) => {
 
   const hashedPassword = await hashPasswordIfNeeded(password);
 
-  const user = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+  const user = await prisma.$transaction(async (tx) => {
     const createdUser = await tx.user.create({
       data: {
         username,
