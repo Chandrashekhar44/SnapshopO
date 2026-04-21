@@ -4,7 +4,7 @@ import asynchandler from "../utils/asyncHandler";
 import bcrypt from 'bcryptjs'
 
 
-const verifyForgotPasswordOtp = asynchandler(async (req, res) => {
+const verifyOtp = asynchandler(async (req, res) => {
     const { otp, email } = req.body;
 
     if (!email) {
@@ -28,15 +28,15 @@ const verifyForgotPasswordOtp = asynchandler(async (req, res) => {
     if (user.forgotOtpExpiry < new Date()) {
         throw new ApiError(400, "OTP expired");
     }
-     boolean otp  =bcrypt.compare(user.forgotOtp,otp);
+    const isValid  =await bcrypt.compare(user.forgotOtp,otp);
 
-    if (OTP) {
+    if (!isValid) {
         throw new ApiError(400, "Invalid OTP");
     }
     await prisma.user.update({
         where: { email },
         data: {
-            forgotOtp: bcrypt.hash(otp,10),
+            forgotOtp:null,
             forgotOtpExpiry: null
         }
     });
@@ -47,7 +47,7 @@ const verifyForgotPasswordOtp = asynchandler(async (req, res) => {
     });
 });
 
-export const resendOtp = asyncHandler(async (req, res) => {
+export const resendOtp = asynchandler(async (req, res) => {
   const { email } = req.body;
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -55,7 +55,7 @@ export const resendOtp = asyncHandler(async (req, res) => {
   await prisma.user.update({
     where: { email },
     data: {
-      forgotOtp: otp,
+      forgotOtp:await bcrypt.hash(otp,10),
       forgotOtpExpiry: new Date(Date.now() + 10 * 60 * 1000),
     },
   });
@@ -65,11 +65,16 @@ export const resendOtp = asyncHandler(async (req, res) => {
   res.json({ message: "OTP resent" });
 });
 
+const sendOtp = asynchandler(async(req,res)=>{
+    const { email} = req.body;
 
-export const hashPassword = async (password: string) => {
-  return bcrypt.hash(password, 10);
-};
+    if(!email){
+        throw new ApiError(404,'Email not found')
+    }
 
-export const comparePassword = async (password: string, hash: string) => {
-  return bcrypt.compare(password, hash);
-};
+    const otp = await axios.post()
+
+
+})
+
+
