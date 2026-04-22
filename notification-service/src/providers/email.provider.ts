@@ -27,6 +27,7 @@ export class EmailProvider implements NotificationProvider{
     
   } catch (error) {
     console.error("Error sending email:", error);
+    throw error;
   }
         
     }
