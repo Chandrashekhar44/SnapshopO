@@ -1,8 +1,7 @@
-import { Worker } from "bullmq";
-import { queueConnection, client } from "../../services/auth-service/config/redis.js";
+import { Queue, Worker } from "bullmq";
+import { queueConnection, client } from "../redis";
 import { prisma } from "../index.js";
 import { categorySorter } from "../categorysortingAi/ai.js";
-import { getIO } from "../socket/socket.js";
 
 const worker = new Worker(
   "orderQueue",
@@ -54,17 +53,20 @@ const worker = new Worker(
       return distance < 0.05;
     });
 
-    const io = getIO();
-
     const pipeline = client.pipeline();
 
-    nearbySellers.forEach((seller) => {
-      pipeline.del(`sellerOrders:${seller.id}`);
+const notificationQueue = new Queue("notificationQueue", {
+  connection: queueConnection,
+});
 
-      io.to(`seller_${seller.id}`).emit("new-order", {
-        orderId,
-      });
-    });
+for (const seller of nearbySellers) {
+  pipeline.del(`sellerOrders:${seller.id}`);
+
+  await notificationQueue.add("new-order", {
+    sellerId: seller.id,
+    orderId,
+  });
+}
 
     await pipeline.exec();
 
