@@ -1,7 +1,7 @@
 import { prisma } from "../index.js";
 import ApiError from "../utils/ApiError.js";
 import asynchandler from "../utils/asyncHandler.js";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
 
 interface JwtPayloadType {
   id: number;

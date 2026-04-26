@@ -2,6 +2,8 @@ import { Queue, Worker } from "bullmq";
 import { queueConnection, client } from "../redis";
 import { prisma } from "../index.js";
 import { categorySorter } from "../categorysortingAi/ai.js";
+ import { notificationQueue } from "./notification.queue";
+
 
 const worker = new Worker(
   "orderQueue",
@@ -55,9 +57,6 @@ const worker = new Worker(
 
     const pipeline = client.pipeline();
 
-const notificationQueue = new Queue("notificationQueue", {
-  connection: queueConnection,
-});
 
 for (const seller of nearbySellers) {
   pipeline.del(`sellerOrders:${seller.id}`);

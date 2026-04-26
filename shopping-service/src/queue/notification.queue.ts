@@ -1,6 +1,6 @@
 import { Queue } from "bullmq";
 import { queueConnection } from "../redis";
 
-export const orderQueue = new Queue("orderQueue", {
+export const notificationQueue = new Queue("notificationQueue", {
   connection: queueConnection,
 });
