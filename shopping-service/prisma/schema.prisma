@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "./ERD.svg"
+}
+
+model Buyer {
+  id        Int      @id @default(autoincrement())
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+  userId    Int      @unique
+  User      User     @relation(fields: [userId], references: [id])
+  Order     Order[]
+}
+
+model Order {
+  id        Int      @id @default(autoincrement())
+  quantity  Int      @default(1)
+  name      String
+  status    String?
+  createdAt DateTime @default(now())
+  buyerId   Int
+  sellerId  Int?
+  Buyer     Buyer    @relation(fields: [buyerId], references: [id])
+  Seller    Seller?  @relation(fields: [sellerId], references: [id])
+}
+
+model Product {
+  id        Int      @id @default(autoincrement())
+  name      String
+  price     Float
+  category  String
+  createdAt DateTime @default(now())
+  sellerId  Int
+  Seller    Seller   @relation(fields: [sellerId], references: [id])
+}
+
+model Seller {
+  id           Int       @id @default(autoincrement())
+  shopName     String
+  shopAddress  String
+  shopCategory String
+  latitude     Float
+  longitude    Float
+  createdAt    DateTime  @default(now())
+  userId       Int       @unique
+  Order        Order[]
+  Product      Product[]
+  User         User      @relation(fields: [userId], references: [id])
+}
+
+model User {
+  id              Int       @id @default(autoincrement())
+  username        String    @unique
+  email           String    @unique
+  address         String
+  latitude        Float
+  longitude       Float
+  password        String
+  createdAt       DateTime  @default(now())
+  category        String
+  forgotOtp       String?
+  forgotOtpExpiry DateTime?
+  Buyer           Buyer?
+  Seller          Seller?
+}
