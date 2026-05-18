@@ -7,6 +7,54 @@ import ApiResponse from '../utils/ApiResponse';
 import asynchandler from '../utils/asyncHandler'
 
 
+
+
+export const searchOrder = asynchandler(async (req, res) => {
+  const { productName } = req.body;
+
+  if (!productName) {
+    throw new ApiError(400, "Missing product name");
+  }
+
+  const cacheKey = `product:${productName}`;
+
+  const cachedProduct = await client.get(cacheKey);
+
+  if (cachedProduct) {
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        JSON.parse(cachedProduct),
+        "Product fetched from Redis cache"
+      )
+    );
+  }
+
+  const product = await prisma.product.findFirst({
+    where: {
+      name: productName,
+    },
+  });
+
+  if (!product) {
+    throw new ApiError(404, "No matched product found");
+  }
+
+  await client.set(
+    cacheKey,
+    JSON.stringify(product),
+    "EX",
+    3600
+  );
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      product,
+      "Product found successfully"
+    )
+  );
+});
 export const placeOrder = asynchandler(async (req, res) => {
   const { name, quantity } = req.body;
   const buyerId = req.user.id;
