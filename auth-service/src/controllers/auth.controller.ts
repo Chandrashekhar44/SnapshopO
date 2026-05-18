@@ -91,7 +91,7 @@ export const cookieOptions: CookieOptions = {
     path: "/"
 };
 
-const loginUser = asynchandler(async (req, res) => {
+export const loginUser = asynchandler(async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
