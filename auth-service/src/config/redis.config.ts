@@ -1,6 +1,9 @@
+import dotenv from "dotenv";
+dotenv.config();
 import Redis from "ioredis";
 
 const redisUrl = process.env.REDIS_URL;
+console.log('redis url :',redisUrl)
 
 if (!redisUrl) {
   throw new Error("REDIS_URL is not defined");
