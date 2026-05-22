@@ -1,11 +1,15 @@
 import http from "http";
-import app from "./app.js";
-import { initSocket } from "./socket/socket.js";
-import { User,PrismaClient } from "@prisma/client";
+import app from "./app";
+import { PrismaClient, User } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 const server = http.createServer(app);
-initSocket(server);
 
-export { prisma,User };
+const PORT = process.env.PORT || 5002;
+
+server.listen(PORT, () => {
+  console.log(`Shopping service running on port ${PORT}`);
+});
+
+export { prisma, User };
