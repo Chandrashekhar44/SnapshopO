@@ -1,20 +1,19 @@
-import asynchandler from '../utils/asyncHandler.js';
-import ApiError from '../utils/ApiError.js';
-import {hashPasswordIfNeeded} from '../utils/userFunction.js';
-import {prisma} from '../index.js';
-import ApiResponse from '../utils/ApiResponse.js'
+import asynchandler from '../utils/asyncHandler';
+import ApiError from '../utils/ApiError';
+import {hashPasswordIfNeeded} from '../utils/userFunction';
+import {prisma} from '../index';
+import ApiResponse from '../utils/ApiResponse'
 import bcrypt from 'bcryptjs';
 import { CookieOptions } from 'express';
-import {generateAccessToken} from '../utils/userFunction.js'
-import { generateRefreshToken } from '../utils/userFunction.js';
-import {client} from "../config/redis.config.js";
-import { Prisma } from '@prisma/client';
+import {generateAccessToken} from '../utils/userFunction'
+import { generateRefreshToken } from '../utils/userFunction';
+import {client} from "../config/redis.config";
 
 
 export const signup = asynchandler(async (req, res) => {
   const { username, email, address, password, latitude, longitude, category } = req.body;
 
-  if (!username || !email || !address || !password || !latitude || !longitude || !category) {
+  if (!username || !email || !address || !password || !category) {
     throw new ApiError(400, "All fields are required");
   }
 
@@ -36,8 +35,6 @@ export const signup = asynchandler(async (req, res) => {
         username,
         email,
         address,
-        latitude,
-        longitude,
         password: hashedPassword,
         category
       }
@@ -49,8 +46,6 @@ export const signup = asynchandler(async (req, res) => {
           shopName: createdUser.username,
           shopAddress: createdUser.address,
           shopCategory: createdUser.category,
-          latitude: createdUser.latitude,
-          longitude: createdUser.longitude,
           userId: createdUser.id
         }
       });
@@ -59,9 +54,7 @@ export const signup = asynchandler(async (req, res) => {
     if (category === "buyer") {
       await tx.buyer.create({
         data: {
-          userId: createdUser.id,
-          latitude: createdUser.latitude,
-          longitude: createdUser.longitude,
+          userId: createdUser.id
         }
       });
     }
