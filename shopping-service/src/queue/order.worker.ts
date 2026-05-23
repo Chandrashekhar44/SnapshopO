@@ -2,7 +2,7 @@ import { Queue, Worker } from "bullmq";
 import { queueConnection, client } from "../redis";
 import { prisma } from "../index.js";
 import { categorySorter } from "../categorysortingAi/ai.js";
- import { notificationQueue } from "./notification.queue";
+import { notificationQueue } from "./notification.queue";
 
 
 const worker = new Worker(

@@ -11,9 +11,10 @@ import {client} from "../config/redis.config";
 
 
 export const signup = asynchandler(async (req, res) => {
-  const { username, email, address, password, latitude, longitude, category } = req.body;
+  const { username, email, address, password, category } = req.body;
+  console.log(req.body);
 
-  if (!username || !email || !address || !password || !category) {
+  if (!username || !email || !address || !password ) {
     throw new ApiError(400, "All fields are required");
   }
 
@@ -85,22 +86,27 @@ export const cookieOptions: CookieOptions = {
 };
 
 export const loginUser = asynchandler(async (req, res) => {
-    const { email, password } = req.body;
+    const { identifier, password } = req.body;
 
-    if (!email || !password) {
+    if (!identifier || !password) {
         throw new ApiError(400, "All fields are required");
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.findFirst({
         where: {
-            email,
-        }
+        OR: [
+          { email: identifier },
+          { username: identifier },
+        ],
+      },
     })
 
     if (!user) {
         throw new ApiError(400, "User not found");
     }
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+        console.log(user);
+
+    const isPasswordValid = await bcrypt.compare(password,user.password );
 
 
     if (!isPasswordValid) {
