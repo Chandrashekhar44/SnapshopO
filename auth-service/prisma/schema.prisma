@@ -26,8 +26,8 @@ model User {
   username  String   @unique
   email     String   @unique
   address   String
-  latitude  Float
-  longitude Float
+  latitude  Float?
+  longitude Float?
   password  String
   forgotOtp String?
   forgotOtpExpiry  DateTime?
@@ -68,8 +68,8 @@ model Seller {
   shopName     String
   shopAddress  String
   shopCategory String
-  latitude     Float
-  longitude    Float
+  latitude     Float?
+  longitude    Float?
   createdAt    DateTime @default(now())
 
   userId Int  @unique
@@ -81,8 +81,8 @@ model Seller {
 
 model Buyer {
   id        Int      @id @default(autoincrement())
-  latitude  Float
-  longitude Float
+  latitude  Float?
+  longitude Float?
   createdAt DateTime @default(now())
 
   userId Int  @unique
