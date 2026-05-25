@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Buyer {
+  id        Int      @id @default(autoincrement())
+  latitude  Float?
+  longitude Float?
+  createdAt DateTime @default(now())
+  userId    Int      @unique
+  User      User     @relation(fields: [userId], references: [id])
+  Order     Order[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Order {
+  id        Int      @id @default(autoincrement())
+  quantity  Int      @default(1)
+  name      String
+  status    String?
+  createdAt DateTime @default(now())
+  buyerId   Int
+  sellerId  Int?
+  Buyer     Buyer    @relation(fields: [buyerId], references: [id])
+  Seller    Seller?  @relation(fields: [sellerId], references: [id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Product {
+  id        Int      @id @default(autoincrement())
+  name      String
+  price     Float
+  category  String
+  createdAt DateTime @default(now())
+  sellerId  Int
+  Seller    Seller   @relation(fields: [sellerId], references: [id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Seller {
+  id           Int       @id @default(autoincrement())
+  shopName     String
+  shopAddress  String
+  shopCategory String
+  latitude     Float?
+  longitude    Float?
+  createdAt    DateTime  @default(now())
+  userId       Int       @unique
+  Order        Order[]
+  Product      Product[]
+  User         User      @relation(fields: [userId], references: [id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model User {
+  id              Int       @id @default(autoincrement())
+  username        String    @unique
+  email           String    @unique
+  address         String
+  latitude        Float?
+  longitude       Float?
+  password        String
+  createdAt       DateTime  @default(now())
+  category        String
+  forgotOtp       String?
+  forgotOtpExpiry DateTime?
+  role            Role      @default(BUYER)
+  Buyer           Buyer?
+  Seller          Seller?
+}
+
+enum Role {
+  BUYER
+  SELLER
+}
+
+model Conversation {
+  id          String    @id @default(cuid())
+  buyerId     String
+  sellerId    String
+  orderId     String
+  lastMessage String?
+  updatedAt   DateTime  @updatedAt
+
+  messages Message[]
+}
+
+model Message {
+  id             String   @id @default(cuid())
+  conversationId String
+  senderId       String
+  text           String
+  seen           Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+}
