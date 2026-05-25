@@ -11,10 +11,10 @@ import {client} from "../config/redis.config";
 
 
 export const signup = asynchandler(async (req, res) => {
-  const { username, email, address, password, category } = req.body;
+  const { username, email, address, password, category,role} = req.body;
   console.log(req.body);
 
-  if (!username || !email || !address || !password ) {
+  if (!username || !email || !address || !password || !category || !role) {
     throw new ApiError(400, "All fields are required");
   }
 
@@ -37,11 +37,12 @@ export const signup = asynchandler(async (req, res) => {
         email,
         address,
         password: hashedPassword,
-        category
+        category,
+        role
       }
     });
 
-    if (category === "seller") {
+    if (role === "SELLER") {
       await tx.seller.create({
         data: {
           shopName: createdUser.username,
@@ -52,7 +53,7 @@ export const signup = asynchandler(async (req, res) => {
       });
     }
 
-    if (category === "buyer") {
+    if (role === "BUYER") {
       await tx.buyer.create({
         data: {
           userId: createdUser.id
@@ -70,6 +71,7 @@ export const signup = asynchandler(async (req, res) => {
       username: true,
       email: true,
       createdAt: true,
+      role:true
     },
   });
 
