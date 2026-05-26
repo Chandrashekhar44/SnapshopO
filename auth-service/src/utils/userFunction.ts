@@ -17,6 +17,7 @@ async function generateAccessToken(user: User) {
     return jwt.sign(
         {
             id: user.id,
+            role : user.role
         },
         process.env.ACCESS_TOKEN_SECRET!,
         { expiresIn: "15m" }
@@ -27,6 +28,7 @@ async function generateRefreshToken(user: User) {
     return jwt.sign(
         {
             id: user.id,
+            role: user.role
         },
         process.env.REFRESH_TOKEN_SECRET!,
         { expiresIn: "7d" }
