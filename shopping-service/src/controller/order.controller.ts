@@ -55,6 +55,7 @@ export const searchOrder = asynchandler(async (req, res) => {
     )
   );
 });
+
 export const placeOrder = asynchandler(async (req, res) => {
   const { name, quantity } = req.body;
   const buyerId = req.user.id;
