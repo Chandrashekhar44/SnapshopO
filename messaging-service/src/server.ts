@@ -1,42 +1,40 @@
-import express from "express";
 import http from "http";
+import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
-import { Server } from "socket.io";
 
-import { socketAuth } from "./socket/middleware/socketAuth.js";
-import { messageHandler } from "./socket/handlers/messageHandler.js";
-import { joinUserRoom } from "./socket/rooms/joinUserRoom.js";
+import { setupSocket } from "./config/socket";
+import router from "./routes/conversation.routes";
 
-dotenv.config();
 
 const app = express();
 
-app.use(cors());
+
+app.use(
+  cors({
+    origin: "http://localhost:3000", 
+    credentials: true,
+  })
+);
 app.use(express.json());
+
+
+app.use("/api/users", router);
+
+app.get("/", (req, res) => {
+  res.send("Server is running!");
+});
+
 
 const server = http.createServer(app);
 
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-  },
-});
 
-io.use(socketAuth);
+setupSocket(server);
 
-io.on("connection", (socket) => {
-  console.log("Connected:", socket.id);
 
-  joinUserRoom(socket);
+const PORT = process.env.PORT || 5004;
 
-  messageHandler(io, socket);
-
-  socket.on("disconnect", () => {
-    console.log("Disconnected");
-  });
-});
-
-server.listen(process.env.PORT, () => {
-  console.log(`Messaging Service running on ${process.env.PORT}`);
+server.listen(PORT, () => {
+  console.log(
+    `Server running on port ${PORT}`
+  );
 });
