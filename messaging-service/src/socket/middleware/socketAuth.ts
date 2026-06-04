@@ -7,36 +7,24 @@ interface JwtPayload {
   username:string;
 }
 
-export const socketAuth = (
-  socket: Socket,
-  next: any
-) => {
-
+export const socketAuth = (socket:Socket, next:any) => {
   try {
+    console.log("AUTH:", socket.handshake.auth);
 
-    const token =
-      socket.handshake.auth.token;
-
-    if (!token) {
-      return next(
-        new Error("Unauthorized")
-      );
-    }
+    const token = socket.handshake.auth.token;
 
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET!
-    ) as JwtPayload;
-
-    socket.user = decoded;
-
-    next();
-
-  } catch (error) {
-
-    next(
-      new Error("Unauthorized")
     );
 
+    console.log("DECODED:", decoded);
+
+    socket.user = decoded as JwtPayload;
+
+    next();
+  } catch (error) {
+    console.log("JWT ERROR:", error);
+    next(new Error("Unauthorized"));
   }
 };

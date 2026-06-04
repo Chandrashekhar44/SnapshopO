@@ -117,13 +117,21 @@ export const loginUser = asynchandler(async (req, res) => {
 
     const accessToken = await generateAccessToken(user);
     const refreshToken = await generateRefreshToken(user);
+    console.log(refreshToken)
 
-    return res.status(200)
-        .cookie("accessToken", accessToken, cookieOptions)
-        .cookie("refreshToken", refreshToken, cookieOptions)
-        .json(
-            new ApiResponse(200, user, "User logged in successfully")
-        );
+
+    console.log(user)
+
+
+    
+
+   return res.status(200)
+  .cookie("accessToken", accessToken, cookieOptions)
+  .cookie("refreshToken", refreshToken, cookieOptions)
+  .json({
+    user,
+    accessToken,
+  });
 })
 
 

@@ -63,22 +63,30 @@ model Seller {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model User {
   id              Int       @id @default(autoincrement())
+
   username        String    @unique
   email           String    @unique
+
   address         String
+
   latitude        Float?
   longitude       Float?
+
   password        String
+
   createdAt       DateTime  @default(now())
+
   category        String
+
   forgotOtp       String?
   forgotOtpExpiry DateTime?
+
   role            Role      @default(BUYER)
+
   Buyer           Buyer?
   Seller          Seller?
-  buyerConversations Conversation[] @relation("BuyerConversation")
 
-  sellerConversations Conversation[] @relation("SellerConversation")
+  conversationMembers ConversationMember[]
 
   sentMessages Message[]
 }
@@ -89,26 +97,36 @@ enum Role {
 }
 
 model Conversation {
-  id          Int       @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
 
-  buyerId     Int
-  sellerId    Int
-  orderId     Int
+  name          String?
+  isGroup       Boolean   @default(false)
 
-  lastMessage String?
+  lastMessage   String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  buyer        User @relation("BuyerConversation", fields: [buyerId], references: [id])
-
-  seller       User @relation("SellerConversation", fields: [sellerId], references: [id])
-
+  members       ConversationMember[]
   messages      Message[]
+}
 
-  @@index([buyerId])
-  @@index([sellerId])
-  @@index([orderId])
+model ConversationMember {
+  id             Int @id @default(autoincrement())
+
+  conversationId Int
+  userId         Int
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  joinedAt       DateTime @default(now())
+
+  @@unique([conversationId, userId])
+
+  @@index([conversationId])
+  @@index([userId])
 }
 
 model Message {
@@ -119,13 +137,14 @@ model Message {
 
   text           String
 
-  seen           Boolean  @default(false)
+  seen           Boolean   @default(false)
 
-  createdAt      DateTime @default(now())
+  createdAt      DateTime  @default(now())
 
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   sender         User @relation(fields: [senderId], references: [id])
 
   @@index([conversationId])
+  @@index([senderId])
 }

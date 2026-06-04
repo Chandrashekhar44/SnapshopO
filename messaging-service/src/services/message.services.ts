@@ -80,12 +80,13 @@ export const negotiationHandler = (
 
 
 
+import { prisma } from "../prisma/client";
+
 export const directChatHandler = (
   io: Server,
   socket: Socket
 ) => {
 
-  
   socket.on(
     "join_conversation",
     ({ conversationId }) => {
@@ -100,26 +101,55 @@ export const directChatHandler = (
     }
   );
 
-
   socket.on(
     "send_private_message",
-    (data) => {
+    async (data) => {
 
       const {
         conversationId,
         text,
       } = data;
 
-      io.to(
-        `conversation:${conversationId}`
-      ).emit(
-        "receive_private_message",
-        {
-          senderId: socket.user.id,
-          text,
-          createdAt: new Date(),
-        }
-      );
+      try {
+
+        const message =
+          await prisma.message.create({
+            data: {
+              conversationId,
+              senderId: Number(socket.user.id),
+              text,
+            },
+          });
+
+        await prisma.conversation.update({
+          where: {
+            id: conversationId,
+          },
+          data: {
+            lastMessage: text,
+          },
+        });
+
+        io.to(
+          `conversation:${conversationId}`
+        ).emit(
+          "receive_private_message",
+          {
+            id: message.id,
+            conversationId: message.conversationId,
+            senderId: message.senderId,
+            text: message.text,
+            createdAt: message.createdAt,
+            seen: message.seen,
+          }
+        );
+
+      } catch (error) {
+        console.error(
+          "Error saving message:",
+          error
+        );
+      }
     }
   );
 };

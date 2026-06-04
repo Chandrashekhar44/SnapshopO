@@ -12,7 +12,6 @@ export const getUserThreads = async (
 ) => {
   try {
     const userId = Number(req.params.sellerId);
-    console.log(userId)
 
     const conversations =
       await prisma.conversation.findMany({
@@ -55,6 +54,12 @@ export const getUserThreads = async (
           (m) => m.userId !== userId
         )?.user;
 
+        const unread = c.messages.filter(
+  (m) =>
+    !m.seen &&
+    m.senderId !== userId
+).length;
+
       return {
         id: c.id,
 
@@ -86,7 +91,7 @@ export const getUserThreads = async (
           c.updatedAt
         ).toLocaleTimeString(),
 
-        unread: 0,
+        unread,
 
         online: false,
 
@@ -97,22 +102,14 @@ export const getUserThreads = async (
           username: m.user.username,
         })),
 
-        messages: c.messages.map((m) => ({
-          id: m.id,
-
-          text: m.text,
-
-          senderId: m.senderId,
-
-          role:
-            m.senderId === userId
-              ? "me"
-              : "other",
-
-          time: new Date(
-            m.createdAt
-          ).toLocaleTimeString(),
-        })),
+       messages: c.messages.map((m) => ({
+           id: m.id,
+           text: m.text,
+           senderId: m.senderId,
+           seen: m.seen,
+           role: m.senderId === userId ? "me" : "other",
+           time: new Date(m.createdAt).toLocaleTimeString(),
+       })),
       };
     });
 
@@ -242,12 +239,28 @@ export const getConversationMessages =
         req.params.id
       );
 
+      const userId = Number(
+        req.user.id
+      );
+
+      await prisma.message.updateMany({
+        where: {
+          conversationId,
+          senderId: {
+            not: userId,
+          },
+          seen: false,
+        },
+        data: {
+          seen: true,
+        },
+      });
+
       const messages =
         await prisma.message.findMany({
           where: {
             conversationId,
           },
-
           include: {
             sender: {
               select: {
@@ -256,7 +269,6 @@ export const getConversationMessages =
               },
             },
           },
-
           orderBy: {
             createdAt: "asc",
           },
