@@ -8,14 +8,19 @@ import { CookieOptions } from 'express';
 import {generateAccessToken} from '../utils/userFunction'
 import { generateRefreshToken } from '../utils/userFunction';
 import {client} from "../config/redis.config";
+import jwt from 'jsonwebtoken'
 
 
 export const signup = asynchandler(async (req, res) => {
-  const { username, email, address, password, category,role} = req.body;
+  const { username, email, address, password, category,role,latitude,longitude} = req.body;
   console.log(req.body);
 
   if (!username || !email || !address || !password || !category || !role) {
     throw new ApiError(400, "All fields are required");
+  }
+
+  if(!latitude || !longitude){
+    throw new ApiError(400,"Enable location access")
   }
 
   const existedUser = await prisma.user.findFirst({
@@ -38,7 +43,9 @@ export const signup = asynchandler(async (req, res) => {
         address,
         password: hashedPassword,
         category,
-        role
+        role,
+        latitude,
+        longitude,
       }
     });
 
@@ -81,10 +88,10 @@ export const signup = asynchandler(async (req, res) => {
 });
 
 export const cookieOptions: CookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "none",
-    path: "/"
+  httpOnly: true,
+  secure: false,      
+  sameSite: "lax",    
+  path: "/",
 };
 
 export const loginUser = asynchandler(async (req, res) => {
@@ -135,18 +142,19 @@ export const loginUser = asynchandler(async (req, res) => {
 })
 
 
-const logoutUser = asynchandler(async (req, res) => {
+export const logoutUser = asynchandler(async (req, res) => {
     const userId = req.user?.id; 
 
     if (!userId) {
         throw new ApiError(401, "Unauthorized");
     }
-    await prisma.user.update({
-        where: { id: userId },
-        data: {
-            refreshToken: null, 
-        },
-    });
+    const user = await prisma.user.findUnique({
+      where:{
+        id :userId
+      }
+    })
+
+    console.log(user?.username,"logged out successfully");
 
     return res
         .clearCookie("accessToken", cookieOptions)
@@ -158,7 +166,7 @@ const logoutUser = asynchandler(async (req, res) => {
 });
 
 
-const getCurrentUser = asynchandler(async(req,res)=>{
+export const getCurrentUser = asynchandler(async(req,res)=>{
    const {id} = req.params;
    if(!id || isNaN(Number(id))){
     throw new ApiError(404,"Invalid userid or user not found")
@@ -195,3 +203,52 @@ const getCurrentUser = asynchandler(async(req,res)=>{
     responseData,"Fetched current user successfully"))
 
 })
+
+export const refreshTokenHandler = asynchandler(async (
+  req,
+  res
+) => {
+  const refreshToken =
+    req.cookies?.refreshToken;
+
+  if (!refreshToken) {
+    throw new ApiError(
+      401,
+      "Refresh token missing"
+    );
+  }
+
+  const decoded = jwt.verify(
+    refreshToken,
+    process.env.REFRESH_TOKEN_SECRET!
+  ) as {
+    id: number;
+  };
+
+  const user =
+    await prisma.user.findUnique({
+      where: {
+        id: decoded.id,
+      },
+    });
+
+  if (!user) {
+    throw new ApiError(
+      401,
+      "User not found"
+    );
+  }
+
+  const newAccessToken =
+    await generateAccessToken(user);
+
+  res.cookie(
+    "accessToken",
+    newAccessToken,
+    cookieOptions
+  );
+
+  return res.status(200).json({
+    success: true,
+  });
+});
