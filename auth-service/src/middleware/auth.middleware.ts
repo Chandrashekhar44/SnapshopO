@@ -1,14 +1,16 @@
-import { prisma } from "../index.js";
-import ApiError from "../utils/ApiError.js";
-import asynchandler from "../utils/asyncHandler.js";
+import { prisma } from "../index";
 import jwt from "jsonwebtoken"
+import ApiError from "../utils/ApiError";
+import asynchandler from "../utils/asyncHandler";
 
 interface JwtPayloadType {
   id: number;
 }
-const authMiddleware = asynchandler(async(req,res,next)=>{
+export const authMiddleware = asynchandler(async(req,res,next)=>{
 
-    const token = req.cookies?.accessToken || req.header('Authorization')?.replace("Bearer ","")
+    const token =
+  req.cookies?.accessToken ||
+  req.header("Authorization")?.replace("Bearer ", "");
 
     if(!token){
         throw new ApiError(404,"Unauthorized request");
