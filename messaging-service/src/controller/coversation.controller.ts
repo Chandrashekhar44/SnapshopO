@@ -54,11 +54,11 @@ export const getUserThreads = async (
           (m) => m.userId !== userId
         )?.user;
 
-        const unread = c.messages.filter(
-  (m) =>
-    !m.seen &&
-    m.senderId !== userId
-).length;
+    const unread = c.messages.filter(
+            (m) =>
+               !m.seen &&
+            m.senderId !== userId
+           ).length;
 
       return {
         id: c.id,
@@ -242,6 +242,12 @@ export const getConversationMessages =
       const userId = Number(
         req.user.id
       );
+      console.log("M",userId)
+      console.log(
+  "Marked seen:",
+  conversationId,
+  userId
+);
 
       await prisma.message.updateMany({
         where: {
