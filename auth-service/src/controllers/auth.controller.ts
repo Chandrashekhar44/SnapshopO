@@ -1,6 +1,6 @@
 import asynchandler from '../utils/asyncHandler';
 import ApiError from '../utils/ApiError';
-import {hashPasswordIfNeeded} from '../utils/userFunction';
+import {generateSessionId, hashToken} from '../utils/userFunction';
 import {prisma} from '../index';
 import ApiResponse from '../utils/ApiResponse'
 import bcrypt from 'bcryptjs';
@@ -9,6 +9,8 @@ import {generateAccessToken} from '../utils/userFunction'
 import { generateRefreshToken } from '../utils/userFunction';
 import {client} from "../config/redis.config";
 import jwt from 'jsonwebtoken'
+import { saveRefreshSession } from '../utils/session';
+import { accessCookieOptions, refreshCookieOptions } from '../config/cookies';
 
 
 export const signup = asynchandler(async (req, res) => {
@@ -19,7 +21,7 @@ export const signup = asynchandler(async (req, res) => {
     throw new ApiError(400, "All fields are required");
   }
 
-  if(!latitude || !longitude){
+  if(latitude == null || longitude == null){
     throw new ApiError(400,"Enable location access")
   }
 
@@ -33,7 +35,7 @@ export const signup = asynchandler(async (req, res) => {
     throw new ApiError(400, "User already exists");
   }
 
-  const hashedPassword = await hashPasswordIfNeeded(password);
+  const hashedPassword = await hashToken(password);
 
   const user = await prisma.$transaction(async (tx) => {
     const createdUser = await tx.user.create({
@@ -122,23 +124,34 @@ export const loginUser = asynchandler(async (req, res) => {
         throw new ApiError(400, "Invalid password");
     }
 
-    const accessToken = await generateAccessToken(user);
-    const refreshToken = await generateRefreshToken(user);
-    console.log(refreshToken)
+    const accessToken =  generateAccessToken(user);
+    const sessionId = generateSessionId();
+    const refreshToken =  generateRefreshToken(user,sessionId);
 
+    const hashedRefreshToken = hashToken(refreshToken);
 
-    console.log(user)
+    await saveRefreshSession(
+    user.id,
+    sessionId,
+    hashedRefreshToken
+);
+    const safeUser = {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    role: user.role
+};
 
 
     
 
-   return res.status(200)
-  .cookie("accessToken", accessToken, cookieOptions)
-  .cookie("refreshToken", refreshToken, cookieOptions)
-  .json({
-    user,
-    accessToken,
-  });
+  return res
+           .status(200)
+           .cookie("accessToken", accessToken, accessCookieOptions)
+           .cookie("refreshToken", refreshToken, refreshCookieOptions)
+           .json( new ApiResponse(200,safeUser,
+                                 "Login successful")
+);
 })
 
 
