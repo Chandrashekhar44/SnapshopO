@@ -35,7 +35,7 @@ export const signup = asynchandler(async (req, res) => {
     throw new ApiError(400, "User already exists");
   }
 
-  const hashedPassword = await hashToken(password);
+  const hashedPassword = await bcrypt.hash(password,10);
 
   const user = await prisma.$transaction(async (tx) => {
     const createdUser = await tx.user.create({
@@ -89,12 +89,7 @@ export const signup = asynchandler(async (req, res) => {
   );
 });
 
-export const cookieOptions: CookieOptions = {
-  httpOnly: true,
-  secure: false,      
-  sameSite: "lax",    
-  path: "/",
-};
+
 
 export const loginUser = asynchandler(async (req, res) => {
     const { identifier, password } = req.body;
@@ -170,8 +165,8 @@ export const logoutUser = asynchandler(async (req, res) => {
     console.log(user?.username,"logged out successfully");
 
     return res
-        .clearCookie("accessToken", cookieOptions)
-        .clearCookie("refreshToken", cookieOptions)
+        .clearCookie("accessToken", accessCookieOptions)
+        .clearCookie("refreshToken", refreshCookieOptions)
         .status(200)
         .json(
             new ApiResponse(200, {}, "User logged out successfully")
@@ -216,52 +211,3 @@ export const getCurrentUser = asynchandler(async(req,res)=>{
     responseData,"Fetched current user successfully"))
 
 })
-
-export const refreshTokenHandler = asynchandler(async (
-  req,
-  res
-) => {
-  const refreshToken =
-    req.cookies?.refreshToken;
-
-  if (!refreshToken) {
-    throw new ApiError(
-      401,
-      "Refresh token missing"
-    );
-  }
-
-  const decoded = jwt.verify(
-    refreshToken,
-    process.env.REFRESH_TOKEN_SECRET!
-  ) as {
-    id: number;
-  };
-
-  const user =
-    await prisma.user.findUnique({
-      where: {
-        id: decoded.id,
-      },
-    });
-
-  if (!user) {
-    throw new ApiError(
-      401,
-      "User not found"
-    );
-  }
-
-  const newAccessToken =
-    await generateAccessToken(user);
-
-  res.cookie(
-    "accessToken",
-    newAccessToken,
-    cookieOptions
-  );
-
-  return res.status(200).json({
-    success: true,
-  });
-});
