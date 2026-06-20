@@ -1,25 +1,39 @@
 import { Router } from "express";
-import { createProxyMiddleware } from "http-proxy-middleware";
-import { SERVICES } from "../config/service.config";
-import { verifyToken } from "../middleware/logger.middleware";
+import { createServiceProxy } from "../utils/proxy.utils";
+import { env } from "../config/service.config";
 
 const router = Router();
 
 router.use(
-  "/auth",
-  createProxyMiddleware({
-    target: SERVICES.AUTH,
-    changeOrigin: true,
-  })
+  "/api/auth",
+  createServiceProxy(
+    env.AUTH_SERVICE,
+    "/api/auth"
+  )
 );
 
 router.use(
-  "/commerce",
-  verifyToken, 
-  createProxyMiddleware({
-    target: SERVICES.COMMERCE,
-    changeOrigin: true,
-  })
+  "/api/products",
+  createServiceProxy(
+    env.SHOP_SERVICE,
+    "/api/products"
+  )
+);
+
+router.use(
+  "/api/messages",
+  createServiceProxy(
+    env.MESSAGE_SERVICE,
+    "/api/messages"
+  )
+);
+
+router.use(
+  "/socket.io",
+  createServiceProxy(
+    env.MESSAGE_SERVICE,
+    "/socket.io"
+  )
 );
 
 export default router;
