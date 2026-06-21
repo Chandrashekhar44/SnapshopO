@@ -1,38 +1,59 @@
 import { prisma } from "../../prisma/client";
+import jwt, { TokenExpiredError, JsonWebTokenError } from "jsonwebtoken";
+import asynchandler from "../../utils/asyncHandler";
 import ApiError from "../../utils/ApiError";
-import asynchandler from "../../utils/asyncHandler.js";
-import jwt from "jsonwebtoken"
+
 
 interface JwtPayloadType {
   id: number;
 }
-const authMiddleware = asynchandler(async(req,res,next)=>{
 
-    const token = req.cookies?.accessToken || req.header('Authorization')?.replace("Bearer ","")
+export const authMiddleware = asynchandler(async (req, res, next) => {
+  const token =
+    req.cookies?.accessToken ||
+    req.header("Authorization")?.replace("Bearer ", "");
 
-    if(!token){
-        throw new ApiError(404,"Unauthorized request");
+  if (!token) {
+    throw new ApiError(401, "Access token missing");
+  }
+
+  let decodedToken: JwtPayloadType;
+
+  try {
+    decodedToken = jwt.verify(
+      token,
+      process.env.ACCESS_TOKEN_SECRET!
+    ) as JwtPayloadType;
+
+  } catch (err) {
+
+    if (err instanceof TokenExpiredError) {
+      throw new ApiError(401, "Access token expired");
     }
 
-    const decodedToken = jwt.verify(token,process.env.ACCESS_TOKEN_SECRET!) as JwtPayloadType
-    if(!decodedToken?.id){
-        throw new ApiError(401,"unauthorized request")
+    if (err instanceof JsonWebTokenError) {
+      throw new ApiError(401, "Invalid access token");
     }
 
-    const user = await prisma.user.findUnique({
-        where:{
-            id : decodedToken.id
-        },
-    }
-    )
+    throw new ApiError(401, "Unauthorized token error");
+  }
 
-    if(!user){
-        throw new ApiError(400,"user not found")
+  const user = await prisma.user.findUnique({
+    where: {
+      id: decodedToken.id,
+    },
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      role: true,
+    },
+  });
 
-    }
+  if (!user) {
+    throw new ApiError(401, "User not found");
+  }
 
-    req.user = user;
-
-    next();
-
-})
+  req.user = user;
+  next();
+});

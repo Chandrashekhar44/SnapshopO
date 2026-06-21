@@ -1,30 +1,43 @@
 import { Socket } from "socket.io";
 import jwt from "jsonwebtoken";
+import * as cookie from "cookie";
 
 interface JwtPayload {
-  id: string;
+  id: number;
   role: string;
-  username:string;
+  username: string;
 }
 
-export const socketAuth = (socket:Socket, next:any) => {
+export const socketAuth = (
+  socket: Socket,
+  next: (err?: Error) => void
+) => {
   try {
-    console.log("AUTH:", socket.handshake.auth);
+    const cookies = cookie.parse(
+      socket.handshake.headers.cookie || ""
+    );
 
-    const token = socket.handshake.auth.token;
+    const token = cookies.accessToken;
+
+    console.log("Cookies:", cookies);
+    console.log("Access Token:", token);
+
+    if (!token) {
+      return next(new Error("Access token missing"));
+    }
 
     const decoded = jwt.verify(
       token,
       process.env.JWT_SECRET!
-    );
+    ) as JwtPayload;
 
-    console.log("DECODED:", decoded);
+    socket.user = decoded;
 
-    socket.user = decoded as JwtPayload;
+    console.log("Socket authenticated:", decoded);
 
     next();
   } catch (error) {
-    console.log("JWT ERROR:", error);
+    console.log("Socket JWT Error:", error);
     next(new Error("Unauthorized"));
   }
 };
