@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { createServiceProxy } from "../utils/proxy.utils";
 import { env } from "../config/service.config";
+import { createSocketProxy } from "../utils/socketProxy.utils";
 
 const router = Router();
 
@@ -30,10 +31,7 @@ router.use(
 
 router.use(
   "/socket.io",
-  createServiceProxy(
-    env.MESSAGE_SERVICE,
-    "/socket.io"
-  )
+  createSocketProxy(env.MESSAGE_SERVICE)
 );
 
 export default router;
