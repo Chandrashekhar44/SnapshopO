@@ -1,11 +1,18 @@
-import express from "express";
+import http from "http";
+import app from "./app";
+import { env } from "./config/service.config";
 
-const app = express();
+const server = http.createServer(app);
 
-app.get("/", (req, res) => {
-  res.send("Backend running");
+server.listen(env.PORT, () => {
+  console.log(`API Gateway running on port ${env.PORT}`);
 });
 
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+process.on("SIGINT", () => {
+  console.log("Shutting down API Gateway...");
+
+  server.close(() => {
+    console.log("Server closed");
+    process.exit(0);
+  });
 });
