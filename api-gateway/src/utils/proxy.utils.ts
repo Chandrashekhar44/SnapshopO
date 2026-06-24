@@ -10,10 +10,6 @@ export const createServiceProxy = (
   return createProxyMiddleware({
     target,
     changeOrigin: true,
-    ws: true,
-
-    proxyTimeout: 5000,
-    timeout: 5000,
 
     pathRewrite: (path) => {
       return basePath + path;
@@ -34,7 +30,11 @@ export const createServiceProxy = (
           err.message
         );
 
-        if (!res.headersSent) {
+        if (
+          res &&
+          typeof res.status === "function" &&
+          !res.headersSent
+        ) {
           res.status(503).json({
             success: false,
             message: "Service temporarily unavailable",
