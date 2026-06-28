@@ -1,5 +1,7 @@
 import { prisma } from "..";
+import { client } from "../config/redis.config";
 import ApiError from "../utils/ApiError";
+import ApiResponse from "../utils/ApiResponse";
 import asynchandler from "../utils/asyncHandler";
 import bcrypt from 'bcryptjs'
 
@@ -78,3 +80,60 @@ const sendOtp = asynchandler(async(req,res)=>{
 })
 
 
+
+export const passwordChange = asynchandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    throw new ApiError(400, "Enter both current and new password");
+  }
+
+ 
+
+  const user = await prisma.user.findUnique({
+    where: {
+      id: req.user?.id,
+    },
+  });
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const comparePass = await bcrypt.compare(
+    currentPassword,
+    user.password
+  );
+
+  if (!comparePass) {
+    throw new ApiError(400, "Current password is incorrect");
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  await prisma.user.update({
+    where: {
+      id: req.user?.id,
+    },
+    data: {
+      password: hashedPassword,
+    },
+  });
+
+  const responseData = {
+    success: true,
+    message: "Password updated successfully",
+  };
+
+
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        responseData,
+        "Password updated successfully"
+      )
+    );
+});
