@@ -1,10 +1,18 @@
-import { User } from "@prisma/client";
+import { Role } from "@prisma/client";
 
+interface AuthUser {
+    id: number;
+    username: string;
+    email: string;
+    role: Role;
+}
 
-declare global{
-    namespace Express{
-        interface Request{
-            user : User
+declare global {
+    namespace Express {
+        interface Request {
+            user?: AuthUser;
         }
     }
 }
+
+export {};

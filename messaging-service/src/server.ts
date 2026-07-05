@@ -20,7 +20,7 @@ app.use(
 app.use(express.json());
 
 
-app.use("/api/users", router);
+app.use("/api/messages", router);
 
 app.get("/", (req, res) => {
   res.send("Server is running!");

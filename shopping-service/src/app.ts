@@ -1,9 +1,11 @@
 
 import express,{ Express}from "express"
-import { searchOrder } from "./controller/order.controller";
+import shoppingRoutes from "../src/routes/shopping.routes"
+import cookieParser from "cookie-parser";
 
 const app:Express = express();
 
 app.use(express.json());
-app.post("/search",searchOrder);
+app.use(cookieParser());   
+app.use("/api/products",shoppingRoutes);
 export default app;
