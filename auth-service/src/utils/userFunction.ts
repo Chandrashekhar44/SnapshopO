@@ -1,38 +1,49 @@
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { User } from "../index";
+import crypto from "crypto";
+import { User } from "@prisma/client";
 
 
-
-
-async function hashPasswordIfNeeded(password: string, currentHash?: string) {
-    if (!password) return currentHash || '';
-    if (currentHash && await bcrypt.compare(password, currentHash)) {
-        return currentHash;
-    }
-    return await bcrypt.hash(password, 10);
-}
-
-async function generateAccessToken(user: User) {
-    return jwt.sign(
-        {
-            id: user.id,
-            role : user.role
-        },
-        process.env.ACCESS_TOKEN_SECRET!,
-        { expiresIn: "1h" }
-    );
-}
-
-async function generateRefreshToken(user: User) {
+export const generateAccessToken = (user: User) => {
     return jwt.sign(
         {
             id: user.id,
             role: user.role
         },
-        process.env.REFRESH_TOKEN_SECRET!,
-        { expiresIn: "7d" }
+        process.env.ACCESS_TOKEN_SECRET!,
+        {
+            expiresIn: "15m"
+        }
     );
-}
+};
 
-export { hashPasswordIfNeeded, generateAccessToken, generateRefreshToken };
+
+export const generateRefreshToken = (
+    user: User,
+    sessionId: string
+) => {
+
+    return jwt.sign(
+        {
+            id: user.id,
+            sessionId
+        },
+        process.env.REFRESH_TOKEN_SECRET!,
+        {
+            expiresIn: "7d"
+        }
+    );
+};
+
+
+export const generateSessionId = () => {
+    return crypto.randomUUID();
+};
+
+
+export const hashToken = (token: string) => {
+
+    return crypto
+        .createHash("sha256")
+        .update(token)
+        .digest("hex");
+};
