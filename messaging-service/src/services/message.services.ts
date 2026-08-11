@@ -104,6 +104,10 @@ export const directChatHandler = (
   socket.on(
     "send_private_message",
     async (data) => {
+      console.log(
+  "SOCKET RECEIVED FULL",
+  data
+);
 
       const {
         conversationId,
@@ -120,6 +124,7 @@ export const directChatHandler = (
               text,
             },
           });
+          console.log("socketwalaId",socket.user.id)
 
         await prisma.conversation.update({
           where: {
@@ -143,6 +148,7 @@ export const directChatHandler = (
             seen: message.seen,
           }
         );
+        
 
       } catch (error) {
         console.error(

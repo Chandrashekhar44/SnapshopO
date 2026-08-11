@@ -48,8 +48,8 @@ const worker = new Worker(
 
     const nearbySellers = sellers.filter((seller) => {
       const distance = Math.sqrt(
-        Math.pow(seller.latitude - buyer.latitude, 2) +
-        Math.pow(seller.longitude - buyer.longitude, 2)
+        Math.pow(seller.latitude! - buyer.latitude!, 2) +
+        Math.pow(seller.longitude! - buyer.longitude!, 2)
       );
 
       return distance < 0.05;

@@ -1,14 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
 
 
-
-
-generator erd {
-  provider = "prisma-erd-generator"
-}
 
 generator client {
   provider = "prisma-client-js"
@@ -19,78 +10,141 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  BUYER
-  SELLER
-}
-
-model User {
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Buyer {
   id        Int      @id @default(autoincrement())
-  username  String   @unique
-  email     String   @unique
-  address   String
   latitude  Float?
   longitude Float?
-  password  String
-  forgotOtp String?
-  forgotOtpExpiry  DateTime?
   createdAt DateTime @default(now())
-
-  category String
-  role     Role @default(BUYER)
-  seller   Seller?
-  buyer    Buyer?
+  userId    Int      @unique
+  User      User     @relation(fields: [userId], references: [id])
+  Order     Order[]
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Order {
+  id        Int      @id @default(autoincrement())
+  quantity  Int      @default(1)
+  name      String
+  status    String?
+  createdAt DateTime @default(now())
+  buyerId   Int
+  sellerId  Int?
+  Buyer     Buyer    @relation(fields: [buyerId], references: [id])
+  Seller    Seller?  @relation(fields: [sellerId], references: [id])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Product {
   id        Int      @id @default(autoincrement())
   name      String
   price     Float
   category  String
   createdAt DateTime @default(now())
-
-  sellerId Int
-  seller   Seller @relation(fields: [sellerId], references: [id])
+  sellerId  Int
+  Seller    Seller   @relation(fields: [sellerId], references: [id])
 }
 
-model Order {
-  id        Int      @id @default(autoincrement())
-  quantity  Int      @default(1)
-  name      String
-  status    String? 
-  createdAt DateTime @default(now())
-
-  buyerId Int
-  buyer   Buyer @relation(fields: [buyerId], references: [id])
-
-  sellerId Int?
-  seller   Seller? @relation(fields: [sellerId], references: [id])
-}
-
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Seller {
-  id           Int      @id @default(autoincrement())
+  id           Int       @id @default(autoincrement())
   shopName     String
   shopAddress  String
   shopCategory String
   latitude     Float?
   longitude    Float?
-  createdAt    DateTime @default(now())
-
-  userId Int  @unique
-  user   User @relation(fields: [userId], references: [id])
-
-  products Product[]
-  orders   Order[]
+  createdAt    DateTime  @default(now())
+  userId       Int       @unique
+  Order        Order[]
+  Product      Product[]
+  User         User      @relation(fields: [userId], references: [id])
 }
 
-model Buyer {
-  id        Int      @id @default(autoincrement())
-  latitude  Float?
-  longitude Float?
-  createdAt DateTime @default(now())
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model User {
+  id              Int       @id @default(autoincrement())
 
-  userId Int  @unique
-  user   User @relation(fields: [userId], references: [id])
+  username        String    @unique
+  email           String    @unique
 
-  orders Order[]
+  address         String
+
+  latitude        Float?
+  longitude       Float?
+
+  password        String
+
+  createdAt       DateTime  @default(now())
+
+  category        String
+
+  forgotOtp       String?
+  forgotOtpExpiry DateTime?
+
+  role            Role      @default(BUYER)
+
+  Buyer           Buyer?
+  Seller          Seller?
+
+  conversationMembers ConversationMember[]
+
+  sentMessages Message[]
+}
+
+enum Role {
+  BUYER
+  SELLER
+}
+
+model Conversation {
+  id            Int       @id @default(autoincrement())
+
+  name          String?
+  isGroup       Boolean   @default(false)
+
+  lastMessage   String?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  members       ConversationMember[]
+  messages      Message[]
+}
+
+model ConversationMember {
+  id             Int @id @default(autoincrement())
+
+  conversationId Int
+  userId         Int
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  user           User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  joinedAt       DateTime @default(now())
+
+  @@unique([conversationId, userId])
+
+  @@index([conversationId])
+  @@index([userId])
+}
+
+model Message {
+  id             Int       @id @default(autoincrement())
+
+  conversationId Int
+  senderId       Int
+
+  text           String
+
+  seen           Boolean   @default(false)
+
+  createdAt      DateTime  @default(now())
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  sender         User @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId])
+  @@index([senderId])
 }

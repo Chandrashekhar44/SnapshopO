@@ -261,6 +261,8 @@ export const signup = asynchandler(async (req, res) => {
       }
     });
 
+    
+
     if (role === "SELLER") {
       await tx.seller.create({
         data: {

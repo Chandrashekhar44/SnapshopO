@@ -2,58 +2,187 @@ import {prisma} from '..';
 import { notificationQueue } from '../queue/notification.queue';
 import { orderQueue } from '../queue/order.queue';
 import { client } from '../redis';
+import { searchIndex } from '../search-service/indexer';
 import ApiError from '../utils/ApiError';
 import ApiResponse from '../utils/ApiResponse';
 import asynchandler from '../utils/asyncHandler'
+import { calculateDistance } from '../utils/distance';
 
-
-
-
-export const searchOrder = asynchandler(async (req, res) => {
-  const { productName } = req.body;
-
-  if (!productName) {
-    throw new ApiError(400, "Missing product name");
+export const getProduct = asynchandler(async(req,res)=>{
+  const {id} = req.params;
+  if(!id){
+    throw new ApiError(404,"Missing Product ID")
   }
-
-  const cacheKey = `product:${productName}`;
-
-  const cachedProduct = await client.get(cacheKey);
-
-  if (cachedProduct) {
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        JSON.parse(cachedProduct),
-        "Product fetched from Redis cache"
-      )
-    );
-  }
-
-  const product = await prisma.product.findFirst({
-    where: {
-      name: productName,
+  const product = await prisma.product.findUnique({
+    where:{
+      id : Number(id),
     },
-  });
+    include:{
+      Seller:true
+    }
+  })
 
-  if (!product) {
-    throw new ApiError(404, "No matched product found");
+  if(!product){
+    throw new ApiError(404,"No product found ")
   }
 
-  await client.set(
-    cacheKey,
-    JSON.stringify(product),
-    "EX",
-    3600
-  );
 
   return res.status(200).json(
-    new ApiResponse(
-      200,
-      product,
-      "Product found successfully"
-    )
-  );
+    new ApiResponse(200,product,"Product fetcehd successfully")
+  )
+})
+export const searchOrder =
+asynchandler(async(req,res)=>{
+
+
+const {
+search,
+latitude,
+longitude
+}=req.body;
+
+
+
+if(!search){
+
+throw new ApiError(
+400,
+"Missing product name"
+);
+
+}
+
+
+
+const cacheKey =`search:${search}:${latitude}:${longitude}`;
+
+const cached =await client.get(cacheKey);
+
+
+
+      if(cached){
+        return res.status(200).json(
+
+          new ApiResponse(
+                          200,
+                         JSON.parse(cached),
+                          "Fetched from cache"
+           )
+
+        );
+
+
+      }
+
+
+
+const indexedProducts = searchIndex(search);
+
+
+
+     if(indexedProducts.length===0){
+               return res.status(200).json(
+
+                     new ApiResponse(
+                                     200,
+                                      [],
+                                    "No products found"
+                                    )
+
+                  );
+
+      }
+
+
+const productIds = indexedProducts.map( item=>item.productId);
+
+
+
+const uniqueIds=[...new Set(productIds)];
+const products = await prisma.product.findMany({
+
+      where:{ 
+        id:{in:uniqueIds
+          }
+      },
+
+        include:{
+
+
+        Seller:true
+
+
+      }
+   });
+
+
+
+const nearbyProducts = products.filter(product=>{
+
+
+const seller =
+product.Seller;
+
+
+
+if(!seller)
+return false;
+
+
+
+const distance = calculateDistance(
+
+Number(latitude),
+
+Number(longitude),
+
+seller.latitude!,
+
+seller.longitude!
+
+);
+
+
+
+return distance <=5;
+
+
+
+});
+
+
+
+
+
+await client.setex(
+
+cacheKey,
+
+300,
+
+JSON.stringify(
+nearbyProducts
+)
+
+);
+
+
+
+return res.status(200).json(
+
+new ApiResponse(
+
+200,
+
+nearbyProducts,
+
+"Products fetched successfully"
+
+)
+
+);
+
+
 });
 
 export const placeOrder = asynchandler(async (req, res) => {
@@ -65,7 +194,7 @@ export const placeOrder = asynchandler(async (req, res) => {
   }
 
   const buyer = await prisma.buyer.findUnique({
-    where: { id: buyerId },
+    where: { userId: buyerId },
   });
 
   if (!buyer) {
@@ -74,7 +203,7 @@ export const placeOrder = asynchandler(async (req, res) => {
 
   const order = await prisma.order.create({
     data: {
-      buyerId,
+      buyerId : buyer.id,
       name,
       quantity,
       status: "pending",
@@ -86,7 +215,7 @@ export const placeOrder = asynchandler(async (req, res) => {
     {
       orderId: order.id,
       name,
-      buyerId,
+      buyerId : buyer.id,
     },
     {
       attempts: 3,
@@ -103,7 +232,7 @@ export const placeOrder = asynchandler(async (req, res) => {
 });
 
 
-const confirmOrder = asynchandler(async (req, res) => {
+export const confirmOrder = asynchandler(async (req, res) => {
   const { id } = req.params;
   const sellerId = req.user?.id;
   const { acceptance } = req.body;
@@ -151,7 +280,7 @@ const confirmOrder = asynchandler(async (req, res) => {
 
 
 
-const listOrders = asynchandler(async (req, res) => {
+export const listOrders = asynchandler(async (req, res) => {
   const ownerId = req.user?.id;
 
   if (!ownerId) {
@@ -200,7 +329,7 @@ const listOrders = asynchandler(async (req, res) => {
   );
 });
 
-const cancelOrder = asynchandler(async (req, res) => {
+export const cancelOrder = asynchandler(async (req, res) => {
   const { orderId } = req.params;
 
   const id = Number(orderId);

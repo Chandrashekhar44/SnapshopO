@@ -240,7 +240,7 @@ export const getConversationMessages =
       );
 
       const userId = Number(
-        req.user.id
+        req.user?.id
       );
       console.log("M",userId)
       console.log(
