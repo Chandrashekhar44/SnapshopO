@@ -268,6 +268,8 @@ export const signup = asynchandler(async (req, res) => {
         data: {
           shopName: createdUser.username,
           shopAddress: createdUser.address,
+          latitude:createdUser.latitude,
+          longitude:createdUser.longitude,
           shopCategory: createdUser.category,
           userId: createdUser.id
         }
@@ -277,7 +279,10 @@ export const signup = asynchandler(async (req, res) => {
     if (role === "BUYER") {
       await tx.buyer.create({
         data: {
-          userId: createdUser.id
+          userId: createdUser.id,
+          latitude:createdUser.latitude,
+          longitude:createdUser.longitude  
+
         }
       });
     }
