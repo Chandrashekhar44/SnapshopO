@@ -1,0 +1,245 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Buyer {
+  id        Int       @id @default(autoincrement())
+  latitude  Float?
+  longitude Float?
+  createdAt DateTime  @default(now())
+  userId    Int       @unique
+  User      User      @relation(fields: [userId], references: [id])
+  Order     Order[]
+  requests  Request[]
+}
+
+model Conversation {
+  id      Int     @id @default(autoincrement())
+  name    String?
+  isGroup Boolean @default(false)
+
+  orderId Int? @unique
+
+  lastMessage String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ConversationMember ConversationMember[]
+  Message            Message[]
+
+  Order Order? @relation(fields: [orderId], references: [id])
+}
+
+model ConversationMember {
+  id             Int          @id @default(autoincrement())
+  conversationId Int
+  userId         Int
+  joinedAt       DateTime     @default(now())
+  Conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  User           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([conversationId])
+  @@index([userId])
+}
+
+model Message {
+  id             Int          @id @default(autoincrement())
+  conversationId Int
+  senderId       Int
+  text           String
+  seen           Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  Conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  User           User         @relation(fields: [senderId], references: [id])
+
+  @@index([conversationId])
+  @@index([senderId])
+}
+
+model Order {
+  id        Int         @id @default(autoincrement())
+  quantity  Int         @default(1)
+  name      String
+  price     Float?
+  status    OrderStatus
+  createdAt DateTime    @default(now())
+
+  buyerId  Int
+  sellerId Int?
+
+  requestId Int? @unique
+
+  Buyer   Buyer    @relation(fields: [buyerId], references: [id])
+  Seller  Seller?  @relation(fields: [sellerId], references: [id])
+
+  Request Request? @relation(fields: [requestId], references: [id])
+
+  Conversation Conversation?
+}
+
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PACKED
+  SHIPPED
+  COMPLETED
+  CANCELLED
+}
+
+model Product {
+  id          Int           @id @default(autoincrement())
+  name        String
+  price       Float
+  category    String
+  createdAt   DateTime      @default(now())
+  sellerId    Int
+  images      String[]
+  Seller      Seller        @relation(fields: [sellerId], references: [id])
+  SearchIndex SearchIndex[]
+}
+
+model SearchIndex {
+  id        Int      @id @default(autoincrement())
+  keyword   String
+  productId Int
+  sellerId  Int
+  createdAt DateTime @default(now())
+  Product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([keyword, productId])
+  @@index([keyword])
+  @@index([productId])
+}
+
+model Seller {
+  id           Int                       @id @default(autoincrement())
+  shopName     String
+  shopAddress  String
+  shopCategory String
+  latitude     Float?
+  longitude    Float?
+  createdAt    DateTime                  @default(now())
+  userId       Int                       @unique
+  location     Unsupported("geography")?
+  Order        Order[]
+  Product      Product[]
+  User         User                      @relation(fields: [userId], references: [id])
+  requests     Request[]
+}
+
+model User {
+  id           Int           @id @default(autoincrement())
+  username     String        @unique
+  email        String        @unique
+  deviceTokens DeviceToken[]
+
+  address            String
+  latitude           Float?
+  longitude          Float?
+  password           String
+  createdAt          DateTime             @default(now())
+  category           String
+  forgotOtp          String?
+  forgotOtpExpiry    DateTime?
+  role               Role                 @default(BUYER)
+  Buyer              Buyer?
+  ConversationMember ConversationMember[]
+  Message            Message[]
+  Seller             Seller?
+}
+
+model DeviceToken {
+  id Int @id @default(autoincrement())
+
+  token String @unique
+
+  userId Int
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      Int
+  type        NotificationType
+  title       String
+  description String
+
+  isRead Boolean @default(false)
+
+  status NotificationStatus @default(PENDING)
+
+  requestId Int?
+  request   Request? @relation(fields: [requestId], references: [id])
+
+  entityId   String
+  entityType String
+  actionUrl  String
+
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  @@unique([entityId, entityType, userId], name: "entityId_entityType_userId")
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
+enum NotificationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum NotificationType {
+  ORDER
+  REQUEST
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
+}
+
+enum Role {
+  BUYER
+  SELLER
+}
+
+model Request {
+  id Int @id @default(autoincrement())
+
+  buyerId Int
+  buyer   Buyer @relation(fields: [buyerId], references: [id])
+
+  productName String
+  category    String
+
+  status RequestStatus @default(PENDING)
+
+  acceptedSellerId Int?
+  acceptedSeller   Seller? @relation(fields: [acceptedSellerId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  Order Order?
+  notifications Notification[]
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  COMPLETED
+  CANCELLED
+}
