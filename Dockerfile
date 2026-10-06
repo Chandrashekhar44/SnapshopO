@@ -19,7 +19,11 @@ RUN cd /app/messaging-service && npx prisma generate
 RUN cd /app/notification-service && npx prisma generate
 RUN cd /app/shopping-service && npx prisma generate
 
+RUN cd /app/api-gateway && npm run build
+RUN cd /app/auth-service && npm run build
+RUN cd /app/messaging-service && npm run build
 RUN cd /app/notification-service && npm run build
+RUN cd /app/shopping-service && npm run build
 
 COPY start.sh /app/start.sh
 

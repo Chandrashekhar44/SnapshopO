@@ -19,7 +19,6 @@ const roleAccessMiddleware = asynchandler(async(req,res,next)=>{
         throw new ApiError(401,"unauthorized request")
     }
 
-    const role = decodedToken.role
 
     const user = await prisma.user.findUnique({
         where:{

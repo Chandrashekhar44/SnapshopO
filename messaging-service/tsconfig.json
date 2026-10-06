@@ -12,5 +12,6 @@
     "forceConsistentCasingInFileNames": true,
     "ignoreDeprecations": "6.0"
   },
-  "include": ["src", "../shopping-service/src/search-service"]
+  "include": ["src"],
+"exclude": ["src/utils/userFunction.ts"]
 }

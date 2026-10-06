@@ -1,6 +1,6 @@
 
 import express,{ Express}from "express"
-import shoppingRoutes from "../src/routes/shopping.routes"
+import shoppingRoutes from "./routes/shopping.routes"
 import cookieParser from "cookie-parser";
 import cors from "cors";
 
