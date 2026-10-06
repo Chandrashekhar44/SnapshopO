@@ -9,8 +9,7 @@ const prisma = new PrismaClient();
 
 const server = http.createServer(app);
 
-const PORT = process.env.PORT || 5002;
-
+const PORT = 5002;
 server.listen(PORT, () => {
   console.log(
     `Shopping service running on port ${PORT}`

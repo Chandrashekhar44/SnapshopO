@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const coversation_controller_1 = require("../controller/coversation.controller");
+const search_controller_1 = require("../controller/search.controller");
+const auth_middleware_1 = require("../socket/middleware/auth.middleware");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authMiddleware);
+router.get("/seller/:sellerId", coversation_controller_1.getUserThreads);
+router.get("/conversations/find", coversation_controller_1.findOrCreateConversation);
+router.get("/conversation/:id/messages", coversation_controller_1.getConversationMessages);
+router.get("/search", search_controller_1.searchUsers);
+exports.default = router;
