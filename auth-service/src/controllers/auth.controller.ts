@@ -4,7 +4,6 @@ import {generateSessionId} from '../utils/userFunction';
 import {prisma} from '../index';
 import ApiResponse from '../utils/ApiResponse'
 import bcrypt from 'bcryptjs';
-import { CookieOptions } from 'express';
 import {generateAccessToken} from '../utils/userFunction'
 import { generateRefreshToken } from '../utils/userFunction';
 import {client} from "../config/redis.config";
@@ -32,34 +31,26 @@ const hashToken = (token: string) => {
 
 
 export const refreshTokenHandler = asynchandler(async (req, res) => {
-  console.log("\n================ REFRESH TOKEN REQUEST =================");
 
   const refreshToken = req.cookies?.refreshToken;
 
-  console.log("1. Refresh token received:", !!refreshToken);
 
   if (!refreshToken) {
     console.log("No refresh token found in cookies");
     throw new ApiError(401, "Unauthorized");
   }
 
-  console.log(
-    "Refresh Token (first 30 chars):",
-    refreshToken.substring(0, 30) + "..."
-  );
+ 
 
   let decoded: RefreshPayload;
 
   try {
-    console.log("2. Verifying refresh token...");
 
     decoded = jwt.verify(
       refreshToken,
       process.env.REFRESH_TOKEN_SECRET!
     ) as RefreshPayload;
 
-    console.log(" Refresh token verified");
-    console.log("Decoded payload:", decoded);
 
   } catch (error) {
     console.log("JWT verification failed");
@@ -120,10 +111,8 @@ export const refreshTokenHandler = asynchandler(async (req, res) => {
     );
   }
 
-  console.log("Hash matched");
 
 
-  console.log("5. Fetching user from database...");
 
   const user = await prisma.user.findUnique({
     where: {
@@ -166,7 +155,6 @@ export const refreshTokenHandler = asynchandler(async (req, res) => {
 
   const newSessionId = generateSessionId();
 
-  console.log("New Session ID:", newSessionId);
 
 
   const newRefreshToken = generateRefreshToken(
@@ -183,23 +171,10 @@ export const refreshTokenHandler = asynchandler(async (req, res) => {
     newHash
   );
 
-  console.log("New refresh session saved in Redis");
-
-
-  console.log("7. Generating new access token...");
 
   const newAccessToken = generateAccessToken(user);
 
-  console.log(
-    "New Access Token created:",
-    newAccessToken.substring(0, 30) + "..."
-  );
 
-
-  console.log("8. Sending cookies to browser...");
-
-  console.log("REFRESH COMPLETED SUCCESSFULLY");
-  console.log("================================================\n");
 
 
   return res
@@ -225,7 +200,6 @@ export const refreshTokenHandler = asynchandler(async (req, res) => {
 
 export const signup = asynchandler(async (req, res) => {
   const { username, email, address, password, category,role,latitude,longitude} = req.body;
-  console.log(req.body);
 
   if (!username || !email || !address || !password || !category || !role) {
     throw new ApiError(400, "All fields are required");
@@ -327,7 +301,6 @@ export const loginUser = asynchandler(async (req, res) => {
     if (!user) {
         throw new ApiError(400, "User not found");
     }
-        console.log(user);
 
     const isPasswordValid = await bcrypt.compare(password,user.password );
 

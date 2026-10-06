@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "start": "ts-node src/index.ts"
+    "start": "ts-node --files src/index.ts"
   },
   "author": "",
   "license": "ISC",

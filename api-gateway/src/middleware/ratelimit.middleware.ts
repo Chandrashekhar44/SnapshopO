@@ -1,9 +1,9 @@
 import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 
 export const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
+  windowMs:  60 * 10000, 
 
-  max: 100,
+  max: 1000,
 
   message: {
     success: false,

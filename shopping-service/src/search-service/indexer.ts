@@ -1,78 +1,45 @@
+import { prisma } from "..";
 import { tokenize } from "./tokenizer";
 
-interface ProductIndex{
-
-    productId:number;
-
-    sellerId:number;
-
-}
-
-
-const index:
-Record<string,ProductIndex[]>
-={}
-;
-
-
-export const addProductIndex=(product:any)=>{
-
-
-const words=[
-    ...tokenize(product.name),
-    ...tokenize(product.category)
-];
-
-
-for(const word of words){
-
-
-    if(!index[word]){
-        index[word]=[];
-    }
-
-
-    index[word].push({
-
-        productId:product.id,
-
-        sellerId:product.sellerId
-
-    });
-
-
-}
-
-
+interface IndexableProduct {
+  id: number;
+  name: string;
+  category: string;
+  sellerId: number;
 }
 
 
 
-export const searchIndex=(query:string)=>{
+export async function addProductIndex(
+  product: IndexableProduct
+): Promise<void> {
+
+  const words = [
+    ...new Set([
+      ...tokenize(product.name),
+      ...tokenize(product.category),
+    ]),
+  ];
 
 
-const words=tokenize(query);
+  if (words.length === 0) return;
 
 
-let result:ProductIndex[]=[];
+  await prisma.searchIndex.createMany({
 
+    data: words.map((keyword) => ({
+      keyword,
+      productId: product.id,
+      sellerId: product.sellerId, // <-- add this
+    })),
 
-for(const word of words){
+    skipDuplicates: true,
 
-
-    if(index[word]){
-
-        result.push(
-            ...index[word]
-        );
-
-    }
-
-
+  });
 }
 
-
-return result;
-
-
+export async function removeProductIndex(productId: number): Promise<void> {
+  await prisma.searchIndex.deleteMany({
+    where: { productId },
+  });
 }

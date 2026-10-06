@@ -30,6 +30,14 @@ router.use(
 );
 
 router.use(
+  "/api/notifications",
+  createServiceProxy(
+    env.NOTIFICATION_SERVICE,
+    "/api/notifications"
+  )
+);
+
+router.use(
   "/socket.io",
   createSocketProxy(env.MESSAGE_SERVICE)
 );

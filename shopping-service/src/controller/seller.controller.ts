@@ -2,6 +2,8 @@ import { prisma, User } from "..";
 import ApiError from "../utils/ApiError";
 import ApiResponse from "../utils/ApiResponse";
 import asynchandler from "../utils/asyncHandler";
+import { addProductIndex } from "../search-service/indexer";
+
 
 
 
@@ -53,7 +55,7 @@ export const createProduct = asynchandler(async(req,res)=>{
         throw new ApiError(400,"Product not created try again")
     }
 
-    addProductToIndex(product);
+    addProductIndex(product);
 
     res.status(200).json(new ApiResponse(200,product,"Successfully added product to selling list"))
 
@@ -62,7 +64,6 @@ export const createProduct = asynchandler(async(req,res)=>{
 import { Request, Response } from "express";
 import { supabase } from "../configure/database.configure ";
 import crypto from "crypto";
-import { addProductToIndex } from "../search-service/indexer";
 
 export const uploadImage = async (req: Request, res: Response) => {
   try {
@@ -114,3 +115,37 @@ export const uploadImage = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const seedListings = async(req : Request,res:Response)=>{
+
+  const userId = req.user;
+ try {
+   
+   const sellerId = await prisma.seller.findUnique({
+     where:{
+       userId:userId.id
+     }
+   })
+ 
+   const response = await prisma.product.findMany({
+     where:{
+ 
+       sellerId: sellerId?.id
+ 
+ 
+     }
+   })
+
+   return res.status(200).json(response);
+ 
+ 
+ } catch (error) {
+
+  console.log(error);
+  return res.status(500).json({
+    message:"seedListings fetch failed"
+  })
+  
+ }
+
+}

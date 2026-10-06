@@ -1,5 +1,4 @@
 import { prisma } from "..";
-import { client } from "../config/redis.config";
 import ApiError from "../utils/ApiError";
 import ApiResponse from "../utils/ApiResponse";
 import asynchandler from "../utils/asyncHandler";
@@ -62,7 +61,6 @@ export const resendOtp = asynchandler(async (req, res) => {
     },
   });
 
-  await sendOtpEmail(email, otp);
 
   res.json({ message: "OTP resent" });
 });
@@ -74,7 +72,6 @@ const sendOtp = asynchandler(async(req,res)=>{
         throw new ApiError(404,'Email not found')
     }
 
-    const otp = await axios.post()
 
 
 })

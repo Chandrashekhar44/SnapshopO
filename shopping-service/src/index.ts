@@ -1,6 +1,9 @@
 import http from "http";
 import app from "./app";
 import { PrismaClient, User } from "@prisma/client";
+import "./queue/order.worker";
+import "./queue/demand.worker";
+
 
 const prisma = new PrismaClient();
 
@@ -9,7 +12,9 @@ const server = http.createServer(app);
 const PORT = process.env.PORT || 5002;
 
 server.listen(PORT, () => {
-  console.log(`Shopping service running on port ${PORT}`);
+  console.log(
+    `Shopping service running on port ${PORT}`
+  );
 });
 
 export { prisma, User };

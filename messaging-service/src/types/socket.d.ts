@@ -4,8 +4,9 @@ declare module "socket.io" {
   interface Socket {
     user: {
       id: number;
-      role: string;
-      username: string;
+      username?: string;
+      email?: string;
+      role?: string;
     };
   }
 }

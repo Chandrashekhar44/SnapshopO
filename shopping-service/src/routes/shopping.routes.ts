@@ -1,13 +1,15 @@
 import { authMiddleware } from "../middleware/shopping.middleware";
 import { Router } from "express";
-import { cancelOrder, confirmOrder, getProduct, listOrders, placeOrder, searchOrder } from "../controller/order.controller";
-import { createProduct, uploadImage } from "../controller/seller.controller";
+import { cancelOrder, confirmOrder, getProduct, listOrders, placeOrder, search, searchProduct } from "../controller/order.controller";
+import { createProduct, seedListings, uploadImage } from "../controller/seller.controller";
 import { upload } from "../configure/multer.configure";
+import { saveDeviceToken } from "../controller/deviceToken.controller";
+import { completedOrders, fulfillOrders, getSellerDashboardStats } from "../controller/dashboard.controller";
 
 const router = Router();
 router.use(authMiddleware)
 
-router.post("/buy/product-search",searchOrder);
+router.get("/buy/product-search",search);
 router.post("/place-order",placeOrder);
 router.patch("/confirm-order/:id",confirmOrder);
 router.get("/my-orders",listOrders);
@@ -19,6 +21,12 @@ router.post(
   uploadImage
 );
 router.get("/product/:id",getProduct)
+router.get("/request-order",searchProduct)
+router.post("/device-token",saveDeviceToken)
+router.get("/stats",getSellerDashboardStats);
+router.get("/pendingOrder-stats",fulfillOrders)
+router.get("/completedOrders",completedOrders)
+router.get("/seedListings",seedListings);
 
 
 export default router;

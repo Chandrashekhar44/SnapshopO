@@ -1,35 +1,57 @@
-import { error } from "node:console";
-import {Server} from "socket.io";
+// src/socket/socket.ts
 
-let io:any ;
+import { Server } from "socket.io";
+import { socketAuth, AuthenticatedSocket } from "./socketAuth.js";
 
-export const initSocket = (server: any)=>{
-    io = new Server(server,{
-        cors : {origin : "*"}
-    })
+let io: Server;
 
-    io.on("connection", (socket: any) => {
-    const sellerId = socket.handshake.query.sellerId;
+export const initSocket = (server: any) => {
+  io = new Server(server, {
+    cors: {
+      origin: "http://localhost:3000",
+      credentials: true,
+    },
+  });
 
-    if (sellerId) {
-        socket.join(`seller_${sellerId}`);
-        console.log(`Seller ${sellerId} connected`);
-    }
+  io.use(socketAuth);
+
+  io.on("connection", async (rawSocket) => {
+    const socket =
+      rawSocket as AuthenticatedSocket;
+
+    const userId = socket.user.id;
+
+    const room = `user_${userId}`;
+
+    socket.join(room);
+
+    console.log(
+      `User ${userId} connected: ${socket.id}`
+    );
+
+    console.log(
+      `User ${userId} joined room ${room}`
+    );
+
+    console.log(
+      "Rooms:",
+      Array.from(socket.rooms)
+    );
 
     socket.on("disconnect", () => {
-        console.log("Disconnected:", socket.id);
+      console.log(
+        `User ${userId} disconnected: ${socket.id}`
+      );
     });
-});
-
-
+  });
 };
 
-export const getIO = ()=>{
-    if(!io){
-            throw new Error("Socket is not initialized")
-    }
-    return io;
-}
+export const getIO = () => {
+  if (!io) {
+    throw new Error(
+      "Socket is not initialized"
+    );
+  }
 
-
-
+  return io;
+};
