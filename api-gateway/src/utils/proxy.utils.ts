@@ -11,6 +11,10 @@ export const createServiceProxy = (
     target,
     changeOrigin: true,
 
+    pathRewrite: (path) => {
+      return basePath + path;
+    },
+
     on: {
       proxyReq: (proxyReq, req) => {
         fixRequestBody(proxyReq, req);
