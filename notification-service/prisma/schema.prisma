@@ -68,7 +68,7 @@ model Order {
   quantity  Int         @default(1)
   name      String
   price     Float?
-  status    OrderStatus
+  status OrderStatus @default(PENDING)
   createdAt DateTime    @default(now())
 
   buyerId  Int
