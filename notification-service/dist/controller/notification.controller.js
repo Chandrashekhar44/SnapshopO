@@ -141,7 +141,6 @@ export const getNotifications = async (req, res) => {
         }
         console.log("3333");
         const { limit, cursor, } = parsed.data;
-        // Directly use authenticated user's id
         const userId = req.user.id;
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
         console.log("========== GET NOTIFICATIONS ==========");

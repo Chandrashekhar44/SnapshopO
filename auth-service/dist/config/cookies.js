@@ -4,15 +4,15 @@ exports.refreshCookieOptions = exports.accessCookieOptions = void 0;
 const isProduction = process.env.NODE_ENV === "production";
 exports.accessCookieOptions = {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     maxAge: 15 * 60 * 1000,
     path: "/"
 };
 exports.refreshCookieOptions = {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/"
 };
