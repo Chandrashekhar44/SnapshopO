@@ -178,13 +178,17 @@ model Notification {
 
   status NotificationStatus @default(PENDING)
 
-  entityId   String?
-  entityType String?
-  actionUrl  String?
+  requestId Int?
+  request   Request? @relation(fields: [requestId], references: [id])
+
+  entityId   String
+  entityType String
+  actionUrl  String
 
   createdAt DateTime  @default(now())
   readAt    DateTime?
 
+  @@unique([entityId, entityType, userId], name: "entityId_entityType_userId")
   @@index([userId, isRead])
   @@index([userId, createdAt])
 }
@@ -231,6 +235,7 @@ model Request {
   createdAt DateTime @default(now())
 
   Order Order?
+  notifications Notification[]
 }
 
 enum RequestStatus {
