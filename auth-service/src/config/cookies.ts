@@ -7,8 +7,8 @@ const isProduction =
 
 export const accessCookieOptions: CookieOptions = {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     maxAge: 15 * 60 * 1000,
     path: "/"
 };
@@ -16,8 +16,8 @@ export const accessCookieOptions: CookieOptions = {
 
 export const refreshCookieOptions: CookieOptions = {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/"
 };

@@ -11,16 +11,12 @@ export const createServiceProxy = (
     target,
     changeOrigin: true,
 
-    pathRewrite: (path) => {
-      return basePath + path;
-    },
-
     on: {
       proxyReq: (proxyReq, req) => {
         fixRequestBody(proxyReq, req);
 
         console.log(
-          `[Gateway] ${req.method} ${basePath}${req.url} -> ${target}`
+          `[Gateway] ${req.method} ${req.url} -> ${target}${proxyReq.path}`
         );
       },
 
