@@ -1,8 +1,6 @@
 import { Request, Response } from "express";
 import prisma from "../prisma";
 import {client} from "../redis";
-import asynchandler from "../utils/asyncHandler";
-import { tryCatch } from "bullmq";
 import ApiError from "../utils/ApiError";
 
 
@@ -10,122 +8,103 @@ export const getSellerDashboardStats = async (
   req: Request,
   res: Response
 ) => {
-
   try {
-
     const userId = req.user.id;
 
-
     const seller = await prisma.seller.findUnique({
-      where:{
-        userId:userId
-      }
+      where: { userId }
     });
 
-
-    if(!seller){
+    if (!seller) {
       return res.status(404).json({
-        message:"Seller not found"
+        message: "Seller not found"
       });
     }
 
-
-    const cacheKey = `seller:stats:${seller.id}`;
+    const cacheKey = `seller:stats:v2:${seller.id}`;
 
     const cachedStats = await client.get(cacheKey);
 
-
-    if(cachedStats){
-
+    if (cachedStats) {
       console.log("Returning dashboard stats from Redis");
-
-      return res.status(200).json(
-        JSON.parse(cachedStats)
-      );
-
+      return res.status(200).json(JSON.parse(cachedStats));
     }
-
-
 
     console.log("Fetching dashboard stats from DB");
 
-
-
-    const completedOrderData = await prisma.order.findMany({
-
-      where:{
-        sellerId:seller.id,
-        status:"COMPLETED"
+    const activeOrders = await prisma.order.findMany({
+      where: {
+        sellerId: seller.id,
+        status: {
+          in: ["PENDING", "ACCEPTED", "PACKED", "SHIPPED"]
+        }
       },
-
-      select:{
-        price:true,
-        quantity:true
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        quantity: true,
+        status: true,
+        createdAt: true,
+        buyerId: true,
+        requestId: true,
+        Buyer: {
+          select: {
+            id: true,
+            User: {
+              select: {
+                username: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
       }
-
     });
 
+    const activeListings = activeOrders.length;
 
+    const completedOrderData = await prisma.order.findMany({
+      where: {
+        sellerId: seller.id,
+        status: "COMPLETED"
+      },
+      select: {
+        price: true,
+        quantity: true
+      }
+    });
 
     const totalRevenue = completedOrderData.reduce(
-      (sum,order)=> 
+      (sum, order) =>
         sum + (order.price ?? 0) * order.quantity,
       0
     );
 
-
-
     const newOrders = await prisma.order.count({
-
-      where:{
-        sellerId:seller.id,
-        status:"ACCEPTED"
+      where: {
+        sellerId: seller.id,
+        status: "ACCEPTED"
       }
-
     });
-
-
-
-    const activeListings = await prisma.order.count({
-
-      where:{
-        sellerId:seller.id,
-        status:{
-          in:[
-            "PENDING",
-            "ACCEPTED",
-            "PACKED",
-            "SHIPPED"
-          ]
-        }
-      }
-
-    });
-
-
 
     const completedOrders = await prisma.order.count({
-
-      where:{
-        sellerId:seller.id,
-        status:"COMPLETED"
+      where: {
+        sellerId: seller.id,
+        status: "COMPLETED"
       }
-
     });
 
-
-
     const stats = {
-
       totalRevenue,
-
       activeListings,
-
+      activeOrders,
       newOrders,
-
       completedOrders
-
     };
+
     await client.set(
       cacheKey,
       JSON.stringify(stats),
@@ -133,27 +112,17 @@ export const getSellerDashboardStats = async (
       300
     );
 
-
-
     return res.status(200).json(stats);
 
-
-
-  } catch(error){
-
-    console.error(
-      "Seller dashboard stats error:",
-      error
-    );
-
+  } catch (error) {
+    console.error("Seller dashboard stats error:", error);
 
     return res.status(500).json({
-      message:"Internal server error"
+      message: "Internal server error"
     });
-
   }
-
 };
+
 
 export const fulfillOrders = async (req: Request, res: Response) => {
   try {
