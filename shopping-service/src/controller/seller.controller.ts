@@ -64,10 +64,12 @@ export const createProduct = asynchandler(async(req,res)=>{
 import { Request, Response } from "express";
 import { supabase } from "../configure/database.configure ";
 import crypto from "crypto";
+import axios from "axios";
 
 export const uploadProfileImage = async (req: Request, res: Response) => {
   try {
     const file = req.file;
+    const userId = req.user.id;
 
     if (!file) {
       return res.status(400).json({
@@ -88,6 +90,15 @@ export const uploadProfileImage = async (req: Request, res: Response) => {
     const { data } = supabase.storage
       .from("profile_picture")
       .getPublicUrl(fileName);
+
+    await prisma.user.update({
+  where: {
+    id: userId,
+  },
+  data: {
+    profileImage: data.publicUrl,
+  },
+}); 
 
     return res.json({
       success: true,
