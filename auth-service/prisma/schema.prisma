@@ -145,7 +145,6 @@ model User {
   email    String @unique
 
   address   String
-  profileImage String?
 
   latitude  Float?
   longitude Float?
