@@ -30,7 +30,7 @@ router.get("/seedListings",seedListings);
 router.post(
   "/uploadProfileImage",
   upload.single("image"),
-  uploadImage
+  uploadProfileImage
 );
 
 export default router;
