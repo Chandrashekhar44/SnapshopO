@@ -31,6 +31,7 @@ const roleAccessMiddleware = asynchandler(async(req,res,next)=>{
         throw new ApiError(400,"user not found")
 
     }
+    console.log("rems",user)
 
     req.user = user;
 

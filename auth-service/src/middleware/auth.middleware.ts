@@ -38,16 +38,17 @@ export const authMiddleware = asynchandler(async (req, res, next) => {
   }
 
   const user = await prisma.user.findUnique({
-    where: {
-      id: decodedToken.id,
-    },
-    select: {
-      id: true,
-      username: true,
-      email: true,
-      role: true
-    },
-  });
+  where: {
+    id: decodedToken.id,
+  },
+  select: {
+    id: true,
+    username: true,
+    email: true,
+    role: true,
+    profileImage: true,
+  },
+});
 
   if (!user) {
     throw new ApiError(401, "User not found");
