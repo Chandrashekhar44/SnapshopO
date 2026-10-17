@@ -46,6 +46,7 @@ export const authMiddleware = asynchandler(async (req, res, next) => {
       username: true,
       email: true,
       role: true,
+      profileImage:true
     },
   });
 
