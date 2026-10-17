@@ -139,6 +139,7 @@ model Seller {
   requests Request[]
 }
 
+
 model User {
   id       Int    @id @default(autoincrement())
   username String @unique
@@ -148,6 +149,8 @@ model User {
   latitude  Float?
   longitude Float?
   password  String
+
+  profileImage String?
 
   createdAt       DateTime @default(now())
   category        String
@@ -164,6 +167,7 @@ model User {
   conversationMembers ConversationMember[]
   sentMessages        Message[]
 }
+
 
 model DeviceToken {
   id Int @id @default(autoincrement())
