@@ -1,7 +1,7 @@
 import { authMiddleware } from "../middleware/shopping.middleware";
 import { Router } from "express";
 import { cancelOrder, confirmOrder, getProduct, listOrders, placeOrder, search, searchProduct } from "../controller/order.controller";
-import { createProduct, seedListings, uploadImage } from "../controller/seller.controller";
+import { createProduct, seedListings, uploadImage, uploadProfileImage } from "../controller/seller.controller";
 import { upload } from "../configure/multer.configure";
 import { saveDeviceToken } from "../controller/deviceToken.controller";
 import { completedOrders, fulfillOrders, getSellerDashboardStats } from "../controller/dashboard.controller";
@@ -27,6 +27,7 @@ router.get("/stats",getSellerDashboardStats);
 router.get("/pendingOrder-stats",fulfillOrders)
 router.get("/completedOrders",completedOrders)
 router.get("/seedListings",seedListings);
+router.post("/uploadProfileImage",uploadProfileImage)
 
 
 export default router;

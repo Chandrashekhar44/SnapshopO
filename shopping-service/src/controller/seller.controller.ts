@@ -65,6 +65,43 @@ import { Request, Response } from "express";
 import { supabase } from "../configure/database.configure ";
 import crypto from "crypto";
 
+export const uploadProfileImage = async (req: Request, res: Response) => {
+  try {
+    const file = req.file;
+
+    if (!file) {
+      return res.status(400).json({
+        message: "No image uploaded",
+      });
+    }
+
+    const fileName = `${crypto.randomUUID()}-${file.originalname}`;
+
+    const { error } = await supabase.storage
+      .from("product-images")
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+      });
+
+    if (error) throw error;
+
+    const { data } = supabase.storage
+      .from("product-images")
+      .getPublicUrl(fileName);
+
+    return res.json({
+      success: true,
+      imageUrl: data.publicUrl,
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.status(500).json({
+      message: "Upload failed",
+    });
+  }
+};
+
 export const uploadImage = async (req: Request, res: Response) => {
   try {
 
