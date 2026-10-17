@@ -27,7 +27,10 @@ router.get("/stats",getSellerDashboardStats);
 router.get("/pendingOrder-stats",fulfillOrders)
 router.get("/completedOrders",completedOrders)
 router.get("/seedListings",seedListings);
-router.post("/uploadProfileImage",uploadProfileImage)
-
+router.post(
+  "/uploadProfileImage",
+  upload.single("image"),
+  uploadImage
+);
 
 export default router;
