@@ -78,7 +78,7 @@ export const uploadProfileImage = async (req: Request, res: Response) => {
     const fileName = `${crypto.randomUUID()}-${file.originalname}`;
 
     const { error } = await supabase.storage
-      .from("product-images")
+      .from("profile_picture")
       .upload(fileName, file.buffer, {
         contentType: file.mimetype,
       });
@@ -86,7 +86,7 @@ export const uploadProfileImage = async (req: Request, res: Response) => {
     if (error) throw error;
 
     const { data } = supabase.storage
-      .from("product-images")
+      .from("profile_picture")
       .getPublicUrl(fileName);
 
     return res.json({
