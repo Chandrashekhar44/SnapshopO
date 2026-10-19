@@ -174,6 +174,7 @@ export const fulfillOrders = async (req: Request, res: Response) => {
   }
 };
 
+
 export const completedOrders = async (req: Request, res: Response) => {
   try {
     const userId = req.user.id;

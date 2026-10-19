@@ -14,7 +14,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: "https://snapshop-frontend-phi.vercel.app/",
     credentials: true,
     methods: [
       "GET",
