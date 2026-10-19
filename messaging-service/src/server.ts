@@ -14,7 +14,7 @@ app.use(cookieParser())
 
 app.use(
   cors({
-    origin: "https://snapshop-frontend-phi.vercel.app", 
+    origin: "http://localhost:3000", 
     credentials: true,
   })
 );
