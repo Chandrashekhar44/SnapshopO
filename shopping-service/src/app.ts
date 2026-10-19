@@ -8,7 +8,7 @@ const app:Express = express();
 
 app.use(
     cors({
-        origin:"https://snapshop-frontend-phi.vercel.app/",
+        origin:"https://snapshop-frontend-phi.vercel.app",
         credentials:true
     })
 )
